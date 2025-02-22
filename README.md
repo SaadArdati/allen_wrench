@@ -4,15 +4,6 @@
 
 A collection of opinionated utilities for Flutter and Dart applications, focusing on logging, state utilities, and common development patterns.
 
-## Getting Started
-
-Add the package to your `pubspec.yaml`:
-
-```yaml
-dependencies:
-  allen_wrench: ^1.0.0
-```
-
 ## Key Features
 
 - **Structured Logging**
