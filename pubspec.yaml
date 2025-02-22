@@ -1,0 +1,41 @@
+name: allen_wrench
+description: A collection of opinionated utilities for Flutter applications, featuring structured logging, async operation handling, and stream management helpers.
+version: 0.1.0
+repository: https://github.com/SaadArdati/allen_wrench
+homepage: https://github.com/SaadArdati/allen_wrench
+issue_tracker: https://github.com/SaadArdati/allen_wrench/issues
+
+environment:
+  sdk: ^3.7.0-323.0.dev
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  logger: ^2.5.0
+  universal_io: ^2.2.2
+  stack_trace: ^1.12.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  test: ^1.25.15
+
+topics:
+  - logging
+  - utilities
+  - async
+  - streams
+
+platforms:
+  android:
+  ios:
+  linux:
+  macos:
+  web:
+  windows:
+
+flutter:
+  # Stub
