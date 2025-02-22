@@ -1,13 +1,42 @@
 # Allen Wrench
 
 [![pub package](https://img.shields.io/pub/v/allen_wrench.svg)](https://pub.dev/packages/allen_wrench)
-[![style: very good analysis](https://img.shields.io/badge/style-very_good_analysis-B22C89.svg)](https://pub.dev/packages/very_good_analysis)
 
 A collection of opinionated utilities for Flutter and Dart applications, focusing on logging, state utilities, and common development patterns.
 
+## Getting Started
+
+Add the package to your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  allen_wrench: ^1.0.0
+```
+
+## Key Features
+
+- **Structured Logging**
+  - Structured log messages with class and method context
+  - Beautiful console output
+  - Stack trace formatting with async chain support
+  - Multiple log levels (TRACE, DEBUG, INFO, WARNING, ERROR, FATAL)
+  - Optional file output support
+  - Easy integration via mixins
+
+- **State Management Utilities**
+  - AsyncStateMixin for handling async operations
+  - Typed wrapper for loading, success, and error states
+  - Stream subscription management with automatic cleanup
+
+- **Development Utilities**
+  - Unique ID generation with timestamp-based sorting
+  - URL-safe character encoding
+  - Monotonically increasing IDs
+  - 72-bit random data for collision prevention
+
 ## Features
 
-### 🔍 Structured Logging
+### Structured Logging
 
 A powerful logging system built on top of the `logger` package with:
 
@@ -18,15 +47,73 @@ A powerful logging system built on top of the `logger` package with:
 - Optional file output support
 - Mixin support for easy integration
 
+#### Example Log Output
+
+![Example of Allen Wrench logs](https://raw.githubusercontent.com/SaadArdati/allen_wrench/main/assets/banner.png)
+
+```
+   INFO ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   INFO │ [MyHomePage.info] Starting fetch. simulateError: false
+   INFO └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   INFO ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   INFO │ [MyHomePage.info] Fetch completed successfully (count: 1).
+   INFO └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  DEBUG ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  DEBUG │ [MyHomePage.debug] simulateError set to true
+  DEBUG └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ERROR ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ERROR │ [MyHomePage.error] Something went wrong! :(
+  ERROR ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+  ERROR │ Exception: Simulated error on fetch attempt #2
+  ERROR ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+  ERROR │ 
+  ERROR │ ╔══════════════════════════════ asynchronous gap ══════════════════════════════╗
+  ERROR │ #0 AsyncStateMixin.load  package:allen_wrench/utils/async_state_mixin.dart  152:22
+  ERROR └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+```
+
+#### Initialize Logging
+
+Basic initialization with default settings:
 ```dart
 void main() {
   AllenLogger.init();
+  runApp(MyApp());
 }
+```
 
-// Basic usage
-AllenLogger.info<MyClass>("User logged in", data: {"userId": "123"});
-// OR
+Advanced initialization with custom configuration:
+```dart
+void main() {
+  AllenLogger.init(
+    // Enable file output for persistent logging
+    enableFileOutput: true,
+    filePath: 'logs/app.log',
+    
+    // Customize output format
+    printEmojis: true,
+    lineLength: 120,
+    
+    // Set minimum log level (defaults to all in debug, info in release)
+    verbose: true,
+    
+    // Customize output style
+    noBoxing: false,
+    noPrefix: false,
+  );
+  
+  runApp(MyApp());
+}
+```
+
+#### Basic Usage
+
+```dart
+// Basic logging
 AllenLogger.info("User logged in", data: {"userId": "123"});
+
+// Logging with class context
+AllenLogger.info<MyClass>("Operation completed", data: {"status": "success"});
 
 // Using the mixin
 class MyService with LoggerMixin<MyService> {
@@ -34,9 +121,30 @@ class MyService with LoggerMixin<MyService> {
     info("Operation started");
   }
 }
+
+// Error logging with stack trace
+try {
+  // ... some operation
+} catch (e, stack) {
+  AllenLogger.error<MyClass>(
+    "Operation failed",
+    error: e,
+    stackTrace: stack,
+    data: {"operation": "sync"},
+  );
+}
 ```
 
-### ⚡ State Utilities
+#### Logging Levels
+
+- **TRACE**: Very detailed logs for fine-grained debugging
+- **DEBUG**: Development-time debugging information
+- **INFO**: General operational events
+- **WARNING**: Potentially harmful situations
+- **ERROR**: Error events that might still allow the application to continue running
+- **FATAL**: Very severe error events that will presumably lead the application to abort
+
+### State Utilities
 
 A collection of lightweight mixins to handle common state-related tasks in Flutter applications.
 
@@ -44,12 +152,38 @@ A collection of lightweight mixins to handle common state-related tasks in Flutt
 
 The `AsyncStateMixin` provides a simple, typed wrapper around async operations with loading, success, and error states. Perfect for handling API calls, data loading, and other async tasks. Features include:
 
-- Automatic loading on widget initialization (configurable via `loadOnInit`)
-- Two loading modes: full-screen and alert-only
-- Automatic state management via `ValueNotifier`
-- Type-safe success state
-- Comprehensive error handling with messages and stack traces
-- Reload capabilities with different loading modes
+- Automatic loading on widget initialization (configurable via `loadOnInit`).
+- Disambiguated UI for loading and error states.
+- Optimized state management via `ValueNotifier`.
+- Type-safe success state.
+- Comprehensive error handling with messages and stack traces.
+- Reload capabilities with different loading modes.
+
+##### Operation States
+
+The `AsyncStateMixin` provides three states:
+
+1. **LoadingOperation**: Operation in progress
+   ```dart
+   LoadingOperation(alertOnly: false)
+   ```
+
+2. **SuccessOperation**: Operation completed successfully
+   ```dart
+   SuccessOperation(data: result)
+   ```
+
+3. **ErrorOperation**: Operation failed
+   ```dart
+   ErrorOperation(
+     alertOnly: false,
+     message: "Failed to load data",
+     exception: e,
+     stackTrace: s,
+   )
+   ```
+
+##### Basic Usage
 
 ```dart
 class MyWidget extends StatefulWidget {
@@ -70,17 +204,12 @@ class _MyWidgetState extends State<MyWidget> with AsyncStateMixin<String, MyWidg
       valueListenable: stateNotifier,
       builder: (context, state, _) {
         return switch (state) {
-          // Full-screen loading
-          LoadingOperation(alertOnly: false) => const CircularProgressIndicator(),
-          // Alert-only loading (minimal UI disruption)
-          LoadingOperation(alertOnly: true) => const SmallLoadingIndicator(),
-          // Success with typed data
-          SuccessOperation<String>(data: final result) => Text(result),
-          // Error with full context
-          ErrorOperation(message: final message) => ErrorView(
-            message: message,
-            onRetry: () => reload(), // Convenient reload method
+          LoadingOperation() => const CircularProgressIndicator(),
+          ErrorOperation() => TextButton(
+            onPressed: reload,
+            child: const Text('Failed to load - Tap to retry'),
           ),
+          SuccessOperation(data: final result) => Text(result),
         };
       },
     );
@@ -88,28 +217,154 @@ class _MyWidgetState extends State<MyWidget> with AsyncStateMixin<String, MyWidg
 }
 ```
 
-Key Methods:
-- `fetch()`: Override to implement your data loading logic
-- `load(alertOnly: bool)`: Trigger a load with optional alert-only mode
-- `reload({alertOnly = true})`: Convenience method for reloading with alert-only by default
-- `errorMessage(exception, stackTrace)`: Override to customize error messages
+##### Advanced Usage #1
 
-Usage with Other Mixins:
+This example demonstrates loading and displaying an image using AsyncStateMixin:
+
 ```dart
-class _MyWidgetState extends State<MyWidget> 
-    with AsyncStateMixin<Data, MyWidget>, LoggerMixin<MyWidget> {
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+class ImageLoader extends StatefulWidget {
+  const ImageLoader({super.key});
+
+  @override
+  State<ImageLoader> createState() => _ImageLoaderState();
+}
+
+class _ImageLoaderState extends State<ImageLoader>
+    with AsyncStateMixin<Uint8List, ImageLoader> {
   
   @override
-  FutureOr<Data> fetch() async {
+  FutureOr<Uint8List> fetch() async {
+    final response = await http.get(
+      Uri.parse('https://picsum.photos/300/300'),
+    );
+    
+    if (response.statusCode == 200) {
+      return response.bodyBytes;
+    }
+    throw Exception('Failed to load image: ${response.statusCode}');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<OperationState>(
+      valueListenable: stateNotifier,
+      builder: (context, state, _) => switch (state) {
+        LoadingOperation() => 
+          const CircularProgressIndicator(),
+        ErrorOperation() => 
+          TextButton(
+            onPressed: reload,
+            child: const Text('Failed to load - Tap to retry'),
+          ),
+        SuccessOperation(data: final imageData) => 
+          GestureDetector(
+            onTap: reload,
+            child: Image.memory(
+              imageData,
+              width: 300,
+              height: 300,
+            ),
+          ),
+      },
+    );
+  }
+}
+```
+
+##### Advanced Usage #2
+
+This example demonstrates comprehensive state handling with logging:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+void main() {
+  AllenLogger.init();
+  runApp(const MyApp());
+}
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key});
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage>
+    with AsyncStateMixin<Uint8List, MyHomePage>, LoggerMixin<MyHomePage> {
+  Uint8List? lastLoadedImage;
+
+  @override
+  FutureOr<Uint8List> fetch() async {
     try {
-      info('Starting data fetch...');
-      final result = await dataService.fetchData();
-      info('Fetch completed successfully');
-      return result;
+      info('Starting image fetch');
+      final response = await http.get(
+        Uri.parse('https://picsum.photos/300/300'),
+      );
+      
+      if (response.statusCode != 200) {
+        throw Exception('Failed to load image: ${response.statusCode}');
+      }
+
+      lastLoadedImage = response.bodyBytes;
+      info('Image fetch completed');
+      return lastLoadedImage!;
     } catch (e, s) {
-      error('Fetch failed', error: e, stackTrace: s);
+      error('Image fetch failed', error: e, stackTrace: s);
       rethrow;
     }
+  }
+
+  Widget _buildImageView() {
+    if (lastLoadedImage == null) {
+      return const Text('No image loaded yet');
+    }
+    return Image.memory(
+      lastLoadedImage!,
+      width: 300,
+      height: 300,
+      fit: BoxFit.cover,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('State Demo'),
+        actions: [
+          TextButton(
+            onPressed: () => load(alertOnly: false),
+            child: const Text('Full'),
+          ),
+          TextButton(
+            onPressed: () => reload(),
+            child: const Text('Alert'),
+          ),
+        ],
+      ),
+      body: ValueListenableBuilder<OperationState>(
+        valueListenable: stateNotifier,
+        builder: (context, state, _) => switch (state) {
+          LoadingOperation(alertOnly: false) => const Center(
+            child: CircularProgressIndicator(),
+          ),
+          ErrorOperation(alertOnly: false) => Center(
+            child: TextButton(
+              onPressed: reload,
+              child: const Text('Error - Tap to retry'),
+            ),
+          ),
+          // Alert-only states show the current image if available
+          LoadingOperation() || ErrorOperation() || SuccessOperation() => 
+            _buildImageView(),
+        },
+      ),
+    );
   }
 }
 ```
@@ -137,7 +392,7 @@ class _MyWidgetState extends State<MyWidget> with StreamSubscriberStateMixin {
 }
 ```
 
-### 🎯 Utilities
+### Development Utilities
 
 #### Unique ID Generation
 
@@ -154,70 +409,28 @@ Features of generated IDs:
 - Monotonically increasing
 - URL-safe characters
 
-## Getting Started
-
-Add the package to your `pubspec.yaml`:
-
-```yaml
-dependencies:
-  allen_wrench: ^1.0.0
-```
-
-### Initialize Logging
-
-```dart
-void main() {
-  AllenLogger.init(
-    enableFileOutput: true,
-    filePath: 'logs/app.log',
-    printEmojis: true,
-    lineLength: 120,
-  );
-  
-  runApp(MyApp());
-}
-```
-
 ## Additional Documentation
 
-### Logging Levels
+### Development Utilities
 
-- **TRACE**: Very detailed logs for fine-grained debugging
-- **DEBUG**: Development-time debugging information
-- **INFO**: General operational events
-- **WARNING**: Potentially harmful situations
-- **ERROR**: Error events that might still allow the application to continue running
-- **FATAL**: Very severe error events that will presumably lead the application to abort
+#### Unique ID Generation
 
-### Operation States
+Generate unique, sortable, timestamp-based IDs:
 
-The `AsyncStateMixin` provides three states:
+```dart
+final id = generateId(); // Returns a 20-character string identifier
+```
 
-1. **LoadingOperation**: Operation in progress
-   ```dart
-   LoadingOperation(alertOnly: false)
-   ```
-
-2. **SuccessOperation**: Operation completed successfully
-   ```dart
-   SuccessOperation(data: result)
-   ```
-
-3. **ErrorOperation**: Operation failed
-   ```dart
-   ErrorOperation(
-     alertOnly: false,
-     message: "Failed to load data",
-     exception: e,
-     stackTrace: s,
-   )
-   ```
+Features of generated IDs:
+- Based on timestamps for natural sorting
+- Contains 72-bits of random data to prevent collisions
+- Lexicographically sortable
+- Monotonically increasing
+- URL-safe characters
 
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
 
 ## License
 
