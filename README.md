@@ -49,7 +49,7 @@ A powerful logging system built on top of the `logger` package with:
 
 #### Example Log Output
 
-![Example of Allen Wrench logs](https://raw.githubusercontent.com/SaadArdati/allen_wrench/main/assets/banner.png)
+![Example of Allen Wrench logs](https://raw.githubusercontent.com/SaadArdati/allen_wrench/main/assets/logs.png)
 
 ```
    INFO ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
