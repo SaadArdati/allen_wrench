@@ -9,7 +9,7 @@ import 'package:flutter/widgets.dart';
 /// * [LoadingOperation] - Operation is in progress
 /// * [SuccessOperation] - Operation completed successfully with data
 /// * [ErrorOperation] - Operation failed with error details
-sealed class OperationState {
+sealed class OperationState<T> {
   const OperationState();
 }
 
@@ -17,7 +17,7 @@ sealed class OperationState {
 ///
 /// The [alertOnly] flag determines whether the loading state should trigger
 /// a full loading indicator or just a minimal alert.
-final class LoadingOperation extends OperationState {
+final class LoadingOperation<T> extends OperationState<T> {
   /// Creates a loading state with an optional alert-only flag.
   ///
   /// If [alertOnly] is true, the UI should show a minimal loading indicator
@@ -32,7 +32,7 @@ final class LoadingOperation extends OperationState {
 /// Represents a successfully completed operation with associated data.
 ///
 /// The type parameter [T] specifies the type of data returned by the operation.
-final class SuccessOperation<T> extends OperationState {
+final class SuccessOperation<T> extends OperationState<T> {
   /// Creates a success state with the operation's result data.
   const SuccessOperation({required this.data});
 
@@ -44,7 +44,7 @@ final class SuccessOperation<T> extends OperationState {
 ///
 /// Provides comprehensive error information including an optional message,
 /// the original exception, and stack trace for debugging.
-final class ErrorOperation extends OperationState {
+final class ErrorOperation<T> extends OperationState<T> {
   /// Creates an error state with the specified error details.
   ///
   /// * [alertOnly] - Whether to show a minimal error alert instead of full
@@ -103,12 +103,12 @@ mixin AsyncStateMixin<T, K extends StatefulWidget> on State<K> {
   ///
   /// Listeners will be notified whenever the state changes between loading,
   /// success, and error states.
-  ValueNotifier<OperationState> stateNotifier = ValueNotifier(
+  ValueNotifier<OperationState<T>> stateNotifier = ValueNotifier(
     LoadingOperation(alertOnly: true),
   );
 
   /// The current operation state.
-  OperationState get state => stateNotifier.value;
+  OperationState<T> get state => stateNotifier.value;
 
   /// Whether to automatically load data when the widget is initialized.
   ///
