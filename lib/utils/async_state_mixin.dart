@@ -159,6 +159,7 @@ mixin AsyncStateMixin<T, K extends StatefulWidget> on State<K> {
       if (!mounted) return;
       stateNotifier.value = SuccessOperation(data: result);
     } catch (exception, stackTrace) {
+      onError(exception, stackTrace);
       if (!mounted) return;
       stateNotifier.value = ErrorOperation(
         message: errorMessage(exception, stackTrace),
@@ -174,6 +175,13 @@ mixin AsyncStateMixin<T, K extends StatefulWidget> on State<K> {
   /// Override this method to provide custom error message formatting.
   String errorMessage(Object exception, StackTrace stackTrace) {
     return exception.toString();
+  }
+
+  /// A callback that is triggered when an error is thrown by [load] to
+  /// externally handle any exceptions.
+  void onError(Object exception, StackTrace stackTrace) {
+    debugPrint(exception.toString());
+    debugPrintStack(stackTrace: stackTrace, label: '$runtimeType');
   }
 
   /// Reloads the data with minimal loading indicators.
