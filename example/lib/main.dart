@@ -98,17 +98,17 @@ class _MyHomePageState extends State<MyHomePage>
               children: [
                 ElevatedButton(
                   onPressed: () {
-                    info('Manual reload requested with alertOnly=false');
-                    load(alertOnly: false);
+                    info('Manual reload requested with cached = true');
+                    reload();
                   },
-                  child: const Text('Reload (alertOff)'),
+                  child: const Text('Reload (with cache)'),
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    info('Manual reload requested with alertOnly=true');
-                    reload(alertOnly: true);
+                    info('Manual reload requested with cached = false');
+                    reload(cached: false);
                   },
-                  child: const Text('Reload (alertOn)'),
+                  child: const Text('Reload (without cached)'),
                 ),
               ],
             ),
@@ -120,7 +120,7 @@ class _MyHomePageState extends State<MyHomePage>
                 valueListenable: stateNotifier,
                 builder:
                     (context, state, _) => switch (state) {
-                      LoadingOperation op when !op.alertOnly => Column(
+                      LoadingOperation op when !op.hasData => Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: const [
                           CircularProgressIndicator(),
@@ -128,7 +128,7 @@ class _MyHomePageState extends State<MyHomePage>
                           Text('Loading data...'),
                         ],
                       ),
-                      ErrorOperation op when !op.alertOnly => Column(
+                      ErrorOperation op when !op.hasData => Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(Icons.error, color: Colors.red, size: 48),

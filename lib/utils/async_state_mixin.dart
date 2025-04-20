@@ -14,19 +14,17 @@ sealed class OperationState<T> {
 }
 
 /// Represents an operation that is currently in progress.
-///
-/// The [alertOnly] flag determines whether the loading state should trigger
-/// a full loading indicator or just a minimal alert.
 final class LoadingOperation<T> extends OperationState<T> {
   /// Creates a loading state with an optional alert-only flag.
   ///
-  /// If [alertOnly] is true, the UI should show a minimal loading indicator
-  /// instead of a full-screen loading state.
-  const LoadingOperation({this.alertOnly = false});
+  /// [data] - The last known data, if any.
+  const LoadingOperation({this.data});
 
-  /// A flag that helps to determine how to display loading states on the UI
-  /// side.
-  final bool alertOnly;
+  /// The last known data, if any.
+  final T? data;
+
+  /// A convenience getter that determines whether [data] exists or not.
+  bool get hasData => data != null;
 }
 
 /// Represents a successfully completed operation with associated data.
@@ -47,20 +45,15 @@ final class SuccessOperation<T> extends OperationState<T> {
 final class ErrorOperation<T> extends OperationState<T> {
   /// Creates an error state with the specified error details.
   ///
-  /// * [alertOnly] - Whether to show a minimal error alert instead of full
-  ///   error UI
-  /// * [message] - Optional human-readable error message
+  /// * [message] - Optional human-readable error message.
   /// * [exception] - Optional exception object that caused the error
   /// * [stackTrace] - Optional stack trace for debugging
   const ErrorOperation({
-    required this.alertOnly,
     this.message,
     this.exception,
     this.stackTrace,
+    this.data,
   });
-
-  /// A flag that helps to determine how to display error states on the UI side.
-  final bool alertOnly;
 
   /// Human-readable error message describing what went wrong.
   final String? message;
@@ -70,6 +63,12 @@ final class ErrorOperation<T> extends OperationState<T> {
 
   /// Stack trace from when the error occurred, useful for debugging.
   final StackTrace? stackTrace;
+
+  /// The last known data, if any.
+  final T? data;
+
+  /// A convenience getter that determines whether [data] exists or not.
+  bool get hasData => data != null;
 }
 
 /// A mixin that adds loading state management to a [StatefulWidget].
@@ -103,9 +102,7 @@ mixin AsyncStateMixin<T, K extends StatefulWidget> on State<K> {
   ///
   /// Listeners will be notified whenever the state changes between loading,
   /// success, and error states.
-  ValueNotifier<OperationState<T>> stateNotifier = ValueNotifier(
-    LoadingOperation(alertOnly: true),
-  );
+  final stateNotifier = ValueNotifier<OperationState<T>>(LoadingOperation<T>());
 
   /// The current operation state.
   OperationState<T> get state => stateNotifier.value;
@@ -120,7 +117,7 @@ mixin AsyncStateMixin<T, K extends StatefulWidget> on State<K> {
   void initState() {
     super.initState();
     if (loadOnInit) {
-      load(alertOnly: false);
+      load();
     }
   }
 
@@ -138,15 +135,24 @@ mixin AsyncStateMixin<T, K extends StatefulWidget> on State<K> {
 
   /// Loads data and updates the operation state accordingly.
   ///
-  /// * [alertOnly] - A flag that is delegated to the states to help determine
-  ///  how to display loading and error states on the UI side.
+  /// * [cached] - If true, uses the last known data if available when notifying
+  /// a new loading or exception state.
   ///
   /// This method handles the complete loading lifecycle:
   /// 1. Sets loading state
   /// 2. Attempts to fetch data
   /// 3. Updates state with success or error result
-  FutureOr<void> load({required bool alertOnly}) async {
-    stateNotifier.value = LoadingOperation(alertOnly: alertOnly);
+  FutureOr<void> load({bool cached = true}) async {
+    final lastData =
+        cached
+            ? switch (stateNotifier.value) {
+              LoadingOperation(:T data) ||
+              ErrorOperation(:T data) ||
+              SuccessOperation(:T data) => data,
+              _ => null,
+            }
+            : null;
+    stateNotifier.value = LoadingOperation(data: lastData);
 
     try {
       final result = await fetch();
@@ -155,10 +161,10 @@ mixin AsyncStateMixin<T, K extends StatefulWidget> on State<K> {
     } catch (exception, stackTrace) {
       if (!mounted) return;
       stateNotifier.value = ErrorOperation(
-        alertOnly: alertOnly,
         message: errorMessage(exception, stackTrace),
         exception: exception,
         stackTrace: stackTrace,
+        data: lastData,
       );
     }
   }
@@ -172,7 +178,7 @@ mixin AsyncStateMixin<T, K extends StatefulWidget> on State<K> {
 
   /// Reloads the data with minimal loading indicators.
   ///
-  /// This is a convenience method that calls [load] with [alertOnly] defaulting
+  /// This is a convenience method that calls [load] with [cached] defaulting
   /// to true, suitable for refresh operations.
-  FutureOr<void> reload({bool alertOnly = true}) => load(alertOnly: alertOnly);
+  FutureOr<void> reload({bool cached = true}) => load();
 }

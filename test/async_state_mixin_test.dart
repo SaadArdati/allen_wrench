@@ -1,7 +1,8 @@
 import 'dart:async';
+
+import 'package:allen_wrench/utils/async_state_mixin.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:allen_wrench/utils/async_state_mixin.dart';
 
 // Test widget that implements AsyncStateMixin
 class TestWidget extends StatefulWidget {
@@ -49,7 +50,7 @@ void main() {
 
       final state = tester.state<TestWidgetState>(find.byType(TestWidget));
       expect(state.state, isA<LoadingOperation>());
-      expect((state.state as LoadingOperation).alertOnly, false);
+      expect((state.state as LoadingOperation).hasData, false);
 
       // Advance time to complete the fetch
       await tester.pumpAndSettle();
@@ -62,7 +63,7 @@ void main() {
 
       final state = tester.state<TestWidgetState>(find.byType(TestWidget));
       expect(state.state, isA<LoadingOperation>());
-      expect((state.state as LoadingOperation).alertOnly, true);
+      expect((state.state as LoadingOperation).hasData, false);
     });
 
     testWidgets('transitions through states correctly during successful load', (
@@ -74,7 +75,7 @@ void main() {
 
       // Initial loading state
       expect(state.state, isA<LoadingOperation>());
-      expect((state.state as LoadingOperation).alertOnly, false);
+      expect((state.state as LoadingOperation).hasData, false);
 
       // Advance time to complete the fetch
       await tester.pumpAndSettle();
@@ -115,9 +116,9 @@ void main() {
       // Need to pump one frame to let the state update
       await tester.pump();
 
-      // Should be in loading state with alertOnly = true
+      // Should be in loading state with no data.
       expect(state.state, isA<LoadingOperation>());
-      expect((state.state as LoadingOperation).alertOnly, true);
+      expect((state.state as LoadingOperation).hasData, false);
 
       // Advance time to complete the fetch
       await tester.pumpAndSettle();
@@ -128,14 +129,14 @@ void main() {
 
       final state = tester.state<TestWidgetState>(find.byType(TestWidget));
 
-      // Load with alertOnly = true
-      state.load(alertOnly: true);
+      // Load with cache = false
+      state.load(cached: false);
 
       // Need to pump one frame to let the state update
       await tester.pump();
 
       expect(state.state, isA<LoadingOperation>());
-      expect((state.state as LoadingOperation).alertOnly, true);
+      expect((state.state as LoadingOperation).hasData, false);
 
       // Advance time to complete the fetch
       await tester.pumpAndSettle();
