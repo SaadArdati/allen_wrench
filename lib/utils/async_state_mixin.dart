@@ -10,15 +10,10 @@ import 'package:flutter/widgets.dart';
 /// * [SuccessOperation] - Operation completed successfully with data
 /// * [ErrorOperation] - Operation failed with error details
 sealed class OperationState<T> {
-  const OperationState();
-}
-
-/// Represents an operation that is currently in progress.
-final class LoadingOperation<T> extends OperationState<T> {
-  /// Creates a loading state with an optional alert-only flag.
+  /// Creates a state with an optional data parameter.
   ///
   /// [data] - The last known data, if any.
-  const LoadingOperation({this.data});
+  const OperationState({this.data});
 
   /// The last known data, if any.
   final T? data;
@@ -27,15 +22,20 @@ final class LoadingOperation<T> extends OperationState<T> {
   bool get hasData => data != null;
 }
 
+/// Represents an operation that is currently in progress.
+final class LoadingOperation<T> extends OperationState<T> {
+  /// Creates a loading state with an optional alert-only flag.
+  ///
+  /// [data] - The last known data, if any.
+  const LoadingOperation({super.data});
+}
+
 /// Represents a successfully completed operation with associated data.
 ///
 /// The type parameter [T] specifies the type of data returned by the operation.
 final class SuccessOperation<T> extends OperationState<T> {
   /// Creates a success state with the operation's result data.
-  const SuccessOperation({required this.data});
-
-  /// The data returned by the successful operation.
-  final T data;
+  const SuccessOperation({required T super.data});
 }
 
 /// Represents a failed operation with error details.
@@ -52,7 +52,7 @@ final class ErrorOperation<T> extends OperationState<T> {
     this.message,
     this.exception,
     this.stackTrace,
-    this.data,
+    super.data,
   });
 
   /// Human-readable error message describing what went wrong.
@@ -63,12 +63,6 @@ final class ErrorOperation<T> extends OperationState<T> {
 
   /// Stack trace from when the error occurred, useful for debugging.
   final StackTrace? stackTrace;
-
-  /// The last known data, if any.
-  final T? data;
-
-  /// A convenience getter that determines whether [data] exists or not.
-  bool get hasData => data != null;
 }
 
 /// A mixin that adds loading state management to a [StatefulWidget].
