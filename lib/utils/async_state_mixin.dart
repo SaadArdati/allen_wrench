@@ -74,6 +74,55 @@ final class ErrorOperation<T> extends OperationState<T> {
   final StackTrace? stackTrace;
 }
 
+/// Callback for handling errors in AsyncStateMixin.
+typedef AsyncStateErrorHandler =
+    void Function(Object exception, StackTrace stackTrace);
+
+/// Callback for formatting error messages in AsyncStateMixin.
+typedef AsyncStateErrorMessageFormatter =
+    String Function(Object exception, StackTrace stackTrace);
+
+/// Provides global configuration for AsyncStateMixin behaviors.
+class AsyncStateConfig extends InheritedWidget {
+  /// Overrides the error handling callback.
+  final AsyncStateErrorHandler? onError;
+
+  /// Overrides the error message formatter.
+  final AsyncStateErrorMessageFormatter? errorMessage;
+
+  const AsyncStateConfig({
+    super.key,
+    required super.child,
+    this.onError,
+    this.errorMessage,
+  });
+
+  /// Retrieves the nearest AsyncStateConfig from the widget tree.
+  ///
+  /// Throws a StateError if no AsyncStateConfig is found.
+  static AsyncStateConfig of(BuildContext context) {
+    final config =
+        context.dependOnInheritedWidgetOfExactType<AsyncStateConfig>();
+    if (config == null) {
+      throw StateError('No AsyncStateConfig found in the widget tree.');
+    }
+    return config;
+  }
+
+  /// Retrieves the nearest AsyncStateConfig from the widget tree.
+  ///
+  /// Returns null if no AsyncStateConfig is found.
+  static AsyncStateConfig? maybeOf(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<AsyncStateConfig>();
+  }
+
+  @override
+  bool updateShouldNotify(covariant AsyncStateConfig oldWidget) {
+    return onError != oldWidget.onError ||
+        errorMessage != oldWidget.errorMessage;
+  }
+}
+
 /// A mixin that adds loading state management to a [StatefulWidget].
 ///
 /// This mixin provides a standardized way to handle asynchronous operations
@@ -116,6 +165,13 @@ mixin AsyncStateMixin<T, K extends StatefulWidget> on State<K> {
   /// own discretion.
   bool get loadOnInit => true;
 
+  /// Whether this entire state should be rebuilt when the state changes.
+  ///
+  /// This may be useful if the majority of your build method is dependent on
+  /// the [stateNotifier] and you want to avoid wrapping the whole thing in
+  /// a [ValueListenableBuilder].
+  bool get globalRefresh => false;
+
   @override
   void initState() {
     super.initState();
@@ -152,7 +208,12 @@ mixin AsyncStateMixin<T, K extends StatefulWidget> on State<K> {
     try {
       final result = await fetch();
       if (!mounted) return;
+
       stateNotifier.value = SuccessOperation<T>(data: result);
+
+      if (globalRefresh) {
+        setState(() {});
+      }
     } catch (exception, stackTrace) {
       onError(exception, stackTrace);
       if (!mounted) return;
@@ -169,13 +230,20 @@ mixin AsyncStateMixin<T, K extends StatefulWidget> on State<K> {
   ///
   /// Override this method to provide custom error message formatting.
   String errorMessage(Object exception, StackTrace stackTrace) {
-    return exception.toString();
+    final config = AsyncStateConfig.maybeOf(context);
+    return config?.errorMessage?.call(exception, stackTrace) ??
+        exception.toString();
   }
 
   /// A callback that is triggered when an error is thrown by [load] to
   /// externally handle any exceptions.
   void onError(Object exception, StackTrace stackTrace) {
-    debugPrint(exception.toString());
-    debugPrintStack(stackTrace: stackTrace, label: '$runtimeType');
+    final config = AsyncStateConfig.maybeOf(context);
+    if (config?.onError case var onError?) {
+      onError(exception, stackTrace);
+    } else {
+      debugPrint(exception.toString());
+      debugPrintStack(stackTrace: stackTrace, label: '$runtimeType');
+    }
   }
 }
