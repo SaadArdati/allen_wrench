@@ -12,12 +12,13 @@ import 'package:flutter/widgets.dart';
 sealed class OperationState<T extends Object> {
   /// Creates a state with an optional data parameter.
   ///
-  /// [data] - The data associated with the operation, if any.
+  /// [data] - The data to be associated with this state, if any.
   const OperationState({T? data}) : _data = data;
 
+  /// The data associated with this state, if any.
   final T? _data;
 
-  /// The data associated with the operation, if any.
+  /// The last known data, if any.
   T? get data => _data;
 
   /// A convenience getter that determines whether [data] exists or not.
@@ -35,6 +36,9 @@ final class LoadingOperation<T extends Object> extends OperationState<T> {
 /// Represents a successfully completed operation with associated data.
 final class SuccessOperation<T extends Object> extends OperationState<T> {
   /// Creates a success state with the operation's result data.
+  ///
+  /// * [data] - The data to be associated with this state. Guaranteed to
+  /// be non-null.
   const SuccessOperation({required T super.data});
 
   @override
@@ -180,10 +184,4 @@ mixin AsyncStateMixin<T extends Object, K extends StatefulWidget> on State<K> {
     debugPrint(exception.toString());
     debugPrintStack(stackTrace: stackTrace, label: '$runtimeType');
   }
-
-  /// Reloads the data with minimal loading indicators.
-  ///
-  /// This is a convenience method that calls [load] with [cached] defaulting
-  /// to true, suitable for refresh operations.
-  FutureOr<void> reload({bool cached = true}) => load();
 }
