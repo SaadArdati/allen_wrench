@@ -9,21 +9,23 @@ import 'package:flutter/widgets.dart';
 /// * [LoadingOperation] - Operation is in progress
 /// * [SuccessOperation] - Operation completed successfully with data
 /// * [ErrorOperation] - Operation failed with error details
-sealed class OperationState<T> {
+sealed class OperationState<T extends Object> {
   /// Creates a state with an optional data parameter.
   ///
-  /// [data] - The last known data, if any.
-  const OperationState({this.data});
+  /// [data] - The data associated with the operation, if any.
+  const OperationState({T? data}) : _data = data;
 
-  /// The last known data, if any.
-  final T? data;
+  final T? _data;
+
+  /// The data associated with the operation, if any.
+  T? get data => _data;
 
   /// A convenience getter that determines whether [data] exists or not.
   bool get hasData => data != null;
 }
 
 /// Represents an operation that is currently in progress.
-final class LoadingOperation<T> extends OperationState<T> {
+final class LoadingOperation<T extends Object> extends OperationState<T> {
   /// Creates a loading state with an optional alert-only flag.
   ///
   /// [data] - The last known data, if any.
@@ -31,18 +33,19 @@ final class LoadingOperation<T> extends OperationState<T> {
 }
 
 /// Represents a successfully completed operation with associated data.
-///
-/// The type parameter [T] specifies the type of data returned by the operation.
-final class SuccessOperation<T> extends OperationState<T> {
+final class SuccessOperation<T extends Object> extends OperationState<T> {
   /// Creates a success state with the operation's result data.
   const SuccessOperation({required T super.data});
+
+  @override
+  T get data => _data!;
 }
 
 /// Represents a failed operation with error details.
 ///
 /// Provides comprehensive error information including an optional message,
 /// the original exception, and stack trace for debugging.
-final class ErrorOperation<T> extends OperationState<T> {
+final class ErrorOperation<T extends Object> extends OperationState<T> {
   /// Creates an error state with the specified error details.
   ///
   /// * [message] - Optional human-readable error message.
@@ -91,7 +94,7 @@ final class ErrorOperation<T> extends OperationState<T> {
 ///   }
 /// }
 /// ```
-mixin AsyncStateMixin<T, K extends StatefulWidget> on State<K> {
+mixin AsyncStateMixin<T extends Object, K extends StatefulWidget> on State<K> {
   /// Notifier that broadcasts the current operation state.
   ///
   /// Listeners will be notified whenever the state changes between loading,
