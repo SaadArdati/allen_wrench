@@ -12,12 +12,13 @@ import 'package:flutter/widgets.dart';
 sealed class OperationState<T> {
   /// Creates a state with an optional data parameter.
   ///
-  /// [data] - The last known data, if any.
+  /// [data] - The data associated with the operation, if any.
   const OperationState({T? data}) : _data = data;
 
+  /// The data associated with the operation, if any.
   final T? _data;
 
-  /// The last known data, if any.
+  /// The data associated with the operation, if any.
   T? get data => _data;
 
   /// A convenience getter that determines whether [data] exists or not.
@@ -37,6 +38,9 @@ final class LoadingOperation<T> extends OperationState<T> {
 /// The type parameter [T] specifies the type of data returned by the operation.
 final class SuccessOperation<T> extends OperationState<T> {
   /// Creates a success state with the operation's result data.
+  ///
+  /// * [data] - The data associated with the successful operation, guaranteed
+  /// to be non-null.
   const SuccessOperation({required T super.data});
 
   @override
@@ -142,25 +146,17 @@ mixin AsyncStateMixin<T, K extends StatefulWidget> on State<K> {
   /// 2. Attempts to fetch data
   /// 3. Updates state with success or error result
   FutureOr<void> load({bool cached = true}) async {
-    final lastData =
-        cached
-            ? switch (stateNotifier.value) {
-              LoadingOperation(:T data) ||
-              ErrorOperation(:T data) ||
-              SuccessOperation(:T data) => data,
-              _ => null,
-            }
-            : null;
-    stateNotifier.value = LoadingOperation(data: lastData);
+    final lastData = cached ? stateNotifier.value.data : null;
+    stateNotifier.value = LoadingOperation<T>(data: lastData);
 
     try {
       final result = await fetch();
       if (!mounted) return;
-      stateNotifier.value = SuccessOperation(data: result);
+      stateNotifier.value = SuccessOperation<T>(data: result);
     } catch (exception, stackTrace) {
       onError(exception, stackTrace);
       if (!mounted) return;
-      stateNotifier.value = ErrorOperation(
+      stateNotifier.value = ErrorOperation<T>(
         message: errorMessage(exception, stackTrace),
         exception: exception,
         stackTrace: stackTrace,
